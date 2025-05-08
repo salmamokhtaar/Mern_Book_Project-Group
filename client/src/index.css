@@ -3,23 +3,27 @@
 @tailwind utilities;
 
 :root {
-  /* Primary color - Deep Blue */
-  --primary-color: #1e40af;
-  --primary-light: #3b82f6;
-  --primary-dark: #1e3a8a;
+  /* Primary color - Deep Teal */
+  --primary-color: #0f766e;
+  --primary-light: #14b8a6;
+  --primary-dark: #115e59;
 
-  /* Secondary color - Gold/Yellow */
-  --secondary-color: #f59e0b;
-  --secondary-light: #fbbf24;
-  --secondary-dark: #d97706;
+  /* Secondary color - Warm Amber */
+  --secondary-color: #d97706;
+  --secondary-light: #f59e0b;
+  --secondary-dark: #b45309;
 
   /* Neutral colors */
-  --neutral-50: #f8fafc;
-  --neutral-100: #f1f5f9;
-  --neutral-200: #e2e8f0;
-  --neutral-700: #334155;
-  --neutral-800: #1e293b;
-  --neutral-900: #0f172a;
+  --neutral-50: #fafaf9;
+  --neutral-100: #f5f5f4;
+  --neutral-200: #e7e5e4;
+  --neutral-300: #d6d3d1;
+  --neutral-400: #a8a29e;
+  --neutral-500: #78716c;
+  --neutral-600: #57534e;
+  --neutral-700: #44403c;
+  --neutral-800: #292524;
+  --neutral-900: #1c1917;
 }
 
 @layer utilities {

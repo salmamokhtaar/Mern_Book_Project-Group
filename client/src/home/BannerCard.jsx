@@ -36,11 +36,11 @@ export default function BannerCard() {
       transition={{ duration: 0.5 }}
     >
       {/* Decorative elements */}
-      <div className="absolute -top-12 -right-12 w-24 h-24 bg-secondary-color rounded-full opacity-70 z-0"></div>
-      <div className="absolute -bottom-8 -left-8 w-16 h-16 bg-primary-color rounded-full opacity-70 z-0"></div>
+      <div className="absolute -top-12 -right-12 w-24 h-24 bg-secondary-color rounded-full opacity-50 z-0"></div>
+      <div className="absolute -bottom-8 -left-8 w-16 h-16 bg-primary-color rounded-full opacity-50 z-0"></div>
 
       {/* Glowing effect */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary-color/20 to-secondary-color/20 blur-xl"></div>
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-neutral-500/20 to-neutral-700/20 blur-xl"></div>
 
       <Swiper
         effect={'cards'}

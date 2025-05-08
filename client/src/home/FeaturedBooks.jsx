@@ -132,7 +132,7 @@ function FeaturedBooks() {
                 <p className="text-gray-300 mb-3">by {book.author}</p>
 
                 <div className="mb-4">
-                  <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-primary-color text-white mr-2">
+                  <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-neutral-200 text-neutral-800 mr-2">
                     {book.bookCategory}
                   </span>
                 </div>
@@ -155,7 +155,7 @@ function FeaturedBooks() {
                       href={book.bookPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 bg-secondary-color text-neutral-900 hover:bg-secondary-dark rounded-lg transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-secondary-color text-white hover:bg-secondary-dark rounded-lg transition-colors"
                     >
                       Read Now
                     </a>

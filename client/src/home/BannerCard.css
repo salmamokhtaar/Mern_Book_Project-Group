@@ -51,13 +51,13 @@
   inset: 0;
   border-radius: 18px;
   padding: 2px;
-  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--neutral-500));
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.7;
+  opacity: 0.6;
   pointer-events: none;
 }
 

@@ -131,7 +131,7 @@ function BookCards({ headline, books, subheadline }) {
                           href={book.bookPdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 bg-secondary-color rounded-full text-neutral-900 hover:bg-secondary-dark transition-colors"
+                          className="p-2 bg-secondary-color rounded-full text-white hover:bg-secondary-dark transition-colors"
                           title="Read Book"
                         >
                           <FaBookOpen />
@@ -143,21 +143,21 @@ function BookCards({ headline, books, subheadline }) {
 
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="mb-2">
-                    <span className="text-xs font-semibold inline-block py-1 px-2 rounded-full bg-primary-light/20 text-primary-color last:mr-0 mr-1">
+                    <span className="text-xs font-semibold inline-block py-1 px-2 rounded-full bg-primary-light/20 text-primary-dark last:mr-0 mr-1">
                       {book.bookCategory}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold mb-2 line-clamp-1">{book.bookTitle}</h3>
+                  <h3 className="text-xl font-bold mb-2 line-clamp-1 text-neutral-800">{book.bookTitle}</h3>
 
-                  <p className="text-neutral-700 mb-2">by {book.author}</p>
+                  <p className="text-neutral-600 mb-2">by {book.author}</p>
 
-                  <p className="text-neutral-700 line-clamp-2 mb-4 flex-1">
+                  <p className="text-neutral-600 line-clamp-2 mb-4 flex-1">
                     {book.bookDescription || "No description available"}
                   </p>
 
                   <div className="mt-auto flex justify-between items-center">
-                    <span className="text-lg font-bold text-primary-color">$10.00</span>
+                    <span className="text-lg font-bold text-secondary-dark">$10.00</span>
 
                     <Link
                       to={`/book/${book._id}`}
@@ -178,7 +178,7 @@ function BookCards({ headline, books, subheadline }) {
       <div className="text-center mt-12">
         <Link
           to="/shop"
-          className="inline-block px-6 py-3 bg-gradient-primary-secondary text-white font-medium rounded-lg transition-all duration-300 shadow-md hover:shadow-xl"
+          className="inline-block px-6 py-3 bg-primary-color text-white font-medium rounded-lg transition-all duration-300 shadow-md hover:shadow-xl hover:bg-primary-dark"
         >
           View All Books
         </Link>
