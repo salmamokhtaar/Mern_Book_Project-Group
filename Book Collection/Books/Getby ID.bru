@@ -1,0 +1,15 @@
+meta {
+  name: Getby ID
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3000/book/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}

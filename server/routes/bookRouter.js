@@ -1,4 +1,5 @@
 const express = require("express");
+const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 const {
   uploadBook,
   getAllBooks,
@@ -10,11 +11,14 @@ const {
 
 const router = express.Router();
 
-router.post("/upload_book", uploadBook);
+// Public routes - accessible to all
 router.get("/all_books", getAllBooks);
-router.patch("/book/:id", updateBook);
-router.delete("/book/:id", deleteBook);
 router.get("/books", getBookByCategory);
 router.get("/book/:id", getBookById);
+
+// Admin only routes - require authentication and admin role
+router.post("/upload_book", verifyToken, isAdmin, uploadBook);
+router.patch("/book/:id", verifyToken, isAdmin, updateBook);
+router.delete("/book/:id", verifyToken, isAdmin, deleteBook);
 
 module.exports = router;

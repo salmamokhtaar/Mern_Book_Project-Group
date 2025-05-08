@@ -1,22 +1,25 @@
 
-const express = require('express')
-
-const router = express.Router()
+const express = require('express');
+const router = express.Router();
+const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 
 const {
-    registerUser,
-    loginUser,
-    getUsers,
-    getUserById,
-    updateUser,
-    deleteUser
-  } = require("../controllers/userController");
-  
-  
-  router.post("/register", registerUser);
-  router.post("/login", loginUser);
-  router.get("/users", getUsers);
-  router.get("/users/:id", getUserById);
-  router.put("/users/:id", updateUser);
-  router.delete("/users/:id", deleteUser)
-module.exports = router  
+  registerUser,
+  loginUser,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser
+} = require("../controllers/userController");
+
+// Public routes
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+
+// Protected routes
+router.get("/users", verifyToken, isAdmin, getUsers); // Admin only
+router.get("/users/:id", verifyToken, getUserById);
+router.put("/users/:id", verifyToken, updateUser);
+router.delete("/users/:id", verifyToken, isAdmin, deleteUser); // Admin only
+
+module.exports = router;

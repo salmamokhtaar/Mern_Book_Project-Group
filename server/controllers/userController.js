@@ -1,86 +1,160 @@
-const userModel = require('../model/userModel')
-// register model
+const User = require('../model/userModel');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
+// Register a new user
 const registerUser = async (req, res) => {
   try {
-    const newUser = new userModel(req.body);
-    const saveUser = await newUser.save();
-
-    if (saveUser) {
-      res.status(201).send({ message: "User successfully saved", user: saveUser });
-    } else {
-      res.status(400).send({ message: "Failed to save user" });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User with this email already exists" });
     }
-  } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
-  }
-};
 
-// get
-
-const getUsers = async (req, res) => {
-  try {
-    const users = await userModel.find();
-    res.status(200).send(users);
-  } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
-  }
-};
-// by id
-const getUserById = async (req, res) => {
-  try {
-    const user = await userModel.findById(req.params.id);
-    if (user) {
-      res.status(200).send(user);
-    } else {
-      res.status(404).send({ message: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
-  }
-};
-// put 
-const updateUser = async (req, res) => {
-  try {
-    const updatedUser = await userModel.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (updatedUser) {
-      res.status(200).send({ message: "User successfully updated", user: updatedUser });
-    } else {
-      res.status(404).send({ message: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
-  }
-};
-// del
-
-const deleteUser = async (req, res) => {
-  try {
-    const deletedUser = await userModel.findByIdAndDelete(req.params.id);
-    if (deletedUser) {
-      res.status(200).send({ message: "User successfully deleted" });
-    } else {
-      res.status(404).send({ message: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
-  }
-};
-// finding existing user in the database
-const loginUser = async (req, res) => {
-  try {
-    const userData = await userModel.findOne({
+    // Create new user
+    const newUser = new User({
+      name: req.body.name,
       email: req.body.email,
-      password: req.body.password
+      password: req.body.password,
+      role: req.body.role || "user" // Default to "user" if not specified
     });
 
-    if (userData) {
-      res.status(200).send({ message: "Successfully logged in", user: userData });
-    } else {
-      res.status(401).send({ error: "Invalid email or password" });
-    }
+    // Save user to database
+    const savedUser = await newUser.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: savedUser._id, role: savedUser.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Return user data without password
+    const userWithoutPassword = {
+      _id: savedUser._id,
+      name: savedUser.name,
+      email: savedUser.email,
+      role: savedUser.role,
+      createdAt: savedUser.createdAt
+    };
+
+    res.status(201).json({
+      message: "User successfully registered",
+      user: userWithoutPassword,
+      token
+    });
   } catch (error) {
-    res.status(500).send({ message: "An error occurred", error: error.message });
+    res.status(500).json({ message: "Registration failed", error: error.message });
+  }
+};
+
+// Get all users (admin only)
+const getUsers = async (req, res) => {
+  try {
+    // Find all users but don't return passwords
+    const users = await User.find().select('-password');
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+};
+
+// Get user by ID
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch user", error: error.message });
+  }
+};
+
+// Update user
+const updateUser = async (req, res) => {
+  try {
+    // Don't allow role updates through this endpoint for security
+    if (req.body.role && req.user.role !== 'admin') {
+      delete req.body.role;
+    }
+
+    // If password is being updated, hash it
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      req.body.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User successfully updated",
+      user: updatedUser
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update user", error: error.message });
+  }
+};
+
+// Delete user (admin only)
+const deleteUser = async (req, res) => {
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({ message: "User successfully deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete user", error: error.message });
+  }
+};
+// User login
+const loginUser = async (req, res) => {
+  try {
+    // Find user by email
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(req.body.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Return user data without password
+    const userWithoutPassword = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
+    res.status(200).json({
+      message: "Successfully logged in",
+      user: userWithoutPassword,
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
 
