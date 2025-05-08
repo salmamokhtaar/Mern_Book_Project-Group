@@ -1,90 +1,51 @@
-import React, { useContext, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import React, { useContext, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contects/AuthProvider';
-import axios from 'axios';
-
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-import img from "../assets/banner/35.png"
-
-
 function Login() {
-  const [email , setemail] = useState("")
-  const [password , setPassword] = useState("")
-  const navigates = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-    const {login,signUpWithGmail} = useContext(AuthContext);
-    const [error, setError] = useState("");
-  
-    const location = useLocation();
-    const navigate = useNavigate();
-    const from = location.state?.from?.pathname ||"/";
+  const { login } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const from = location.state?.from?.pathname || "/";
 
-  
-  
-     const handleLogin = (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const email = form.email.value;
-      const password = form.password.value;
-      // console.log(email, password);
-      login(email,password).then((userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
-        toast("Login Successfully...")
-        navigate(from, {replace: true});
-        // ...
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        setError(errorMessage);
-      });
-    
-  
-    
-     }
-  
-     // sign up using goole account
-     const handleRegister = () =>  {
-       signUpWithGmail().then((result)=> {
-        const user = result.user;
-        enqueueSnackbar("Sign Up Successfully...",{variant: 'success'});
-        navigate(from, {replace: true});
-      })    
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        setError(errorMessage);
-        // ..
-      });
-     }
-    //  my
-    const handleLogins = (e) => {
-      e.preventDefault();
-      axios.post('http://localhost:3000/loginuser', {
-        "email": email,
-        "password": password
-      }).then((response) => {
-        if (response.data.status === false) {
-          alert("Email or password is incorrect");
-        } else {
-          alert("Successfully Login");
-          localStorage.setItem("user", JSON.stringify(response.data));
-          navigate("/admin/dashboard");
-        }
-      }).catch((error) => {
-        console.log(error);
-        alert("An error occurred. Please try again.");
-      });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await login(email, password);
+
+      // Store user ID for future reference
+      localStorage.setItem("userId", result.user._id);
+
+      toast.success("Login successful!");
+
+      // Redirect based on user role
+      if (result.user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError(error.response?.data?.message || "Invalid email or password");
+      toast.error("Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
     }
-  
+  };
+
 
 
   return (
-  
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
         <div
@@ -96,36 +57,50 @@ function Login() {
               <h1 className="text-2xl font-semibold">Login Form</h1>
             </div>
             <div className="divide-y divide-gray-200">
-              <form  className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+              <form onSubmit={handleLogin} className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
                 <div className="relative">
-                  <input value={email} onChange={(e)=> setemail(e.target.value)} 
-                    id="email" name="email" type="text" className="peer  h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:borer-rose-600" placeholder="Email address" />
-                
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600"
+                    placeholder="Email address"
+                  />
                 </div>
                 <div className="relative">
-                  <input   value={password} onChange={(e)=> setPassword(e.target.value)} 
-                   id="password" name="password" type="password" className="peer  h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:borer-rose-600" placeholder="Password" />
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600"
+                    placeholder="Password"
+                  />
                 </div>
-                <div>
-                 {error ? <p className='text-red-700'>Email or Password is not Correct </p>: ""}
-                </div>
-                <p>If you haven't an account.Please <Link to={'/signUp'} className='text-blue-700 underline'>Sign up</Link>Here</p>
+                {error && <p className='text-red-700'>{error}</p>}
+                <p>If you don't have an account, please <Link to={'/signUp'} className='text-blue-700 underline'>Sign up</Link> here</p>
                 <div className="relative">
-                  <button onClick={handleLogins}
-                  className="bg-blue-500 text-white rounded-md px-6 py-2">Login</button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-blue-500 text-white rounded-md px-6 py-2 hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+                  >
+                    {isLoading ? 'Logging in...' : 'Login'}
+                  </button>
                 </div>
               </form>
-            </div>
-            <hr />
-            <div  className='flex w-full items-center flex-col mt-5 gap-3'>
-              <button onClick={handleRegister} className='block'> <img src={img} className='w-12 h-12 inline-block' alt="" />login with Google</button>
             </div>
             <ToastContainer />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Login
+export default Login;

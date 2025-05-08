@@ -1,68 +1,137 @@
-import React, {createContext, useEffect, useState } from 'react'
-import app from '../firebase/firebase.config' 
-import { createUserWithEmailAndPassword, getAuth , onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut} from "firebase/auth";
-
+import React, { createContext, useEffect, useState } from 'react';
+import axios from 'axios';
 
 export const AuthContext = createContext();
 
-// Initialize Firebase Authentication and get a reference to the service
-const auth = getAuth(app);
+const API_URL = 'http://localhost:3000';
 
-const AuthProvider = ({children}) => {
+const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    
-  const googleProvider = new GoogleAuthProvider();
+    const [token, setToken] = useState(localStorage.getItem('token') || null);
 
-    const createUser = (email, password) => {
+    // Register a new user
+    const createUser = async (name, email, password, role = 'user') => {
         setLoading(true);
-        return createUserWithEmailAndPassword(auth, email, password);  
-    }
- 
-    // sign up with gmail
-    const signUpWithGmail = () => {
-      setLoading(true);
-     return signInWithPopup(auth,googleProvider);
-    }
+        try {
+            const response = await axios.post(`${API_URL}/register`, {
+                name,
+                email,
+                password,
+                role
+            });
 
-    // lgin
-    const login = (email, password) => {
-      setLoading(true);
-     return signInWithEmailAndPassword(auth,email, password)
-    }
+            const { token, user } = response.data;
 
-    // logout
+            // Save token to localStorage
+            localStorage.setItem('token', token);
+            setToken(token);
+            setUser(user);
+            setLoading(false);
+
+            return response.data;
+        } catch (error) {
+            setLoading(false);
+            throw error;
+        }
+    };
+
+    // Login user
+    const login = async (email, password) => {
+        setLoading(true);
+        try {
+            const response = await axios.post(`${API_URL}/login`, {
+                email,
+                password
+            });
+
+            const { token, user } = response.data;
+
+            // Save token to localStorage
+            localStorage.setItem('token', token);
+            setToken(token);
+            setUser(user);
+            setLoading(false);
+
+            return response.data;
+        } catch (error) {
+            setLoading(false);
+            throw error;
+        }
+    };
+
+    // Logout user
     const logout = () => {
-      return signOut(auth)
-    }
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+        return Promise.resolve();
+    };
 
-    useEffect(()=> {
-    const unsubsribe = onAuthStateChanged(auth,currentUser => {
-      console.log(currentUser);
-      setUser(currentUser);
-      setLoading(false);
+    // Check if user is authenticated on component mount
+    useEffect(() => {
+        const checkAuthStatus = async () => {
+            const storedToken = localStorage.getItem('token');
+
+            if (storedToken) {
+                try {
+                    // Verify token by making a request to a protected endpoint
+                    const response = await axios.get(`${API_URL}/users/${localStorage.getItem('userId')}`, {
+                        headers: {
+                            Authorization: `Bearer ${storedToken}`
+                        }
+                    });
+
+                    setUser(response.data);
+                    setToken(storedToken);
+                } catch (error) {
+                    // If token is invalid, clear it
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    setToken(null);
+                    setUser(null);
+                }
+            }
+
+            setLoading(false);
+        };
+
+        checkAuthStatus();
+    }, []);
+
+    // Create axios instance with auth header
+    const authAxios = axios.create({
+        baseURL: API_URL
     });
-    return () => {
-      return unsubsribe();
-    }
-    },[])
+
+    // Add auth token to all requests
+    authAxios.interceptors.request.use(
+        (config) => {
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
 
     const authInfo = {
         user,
-        signUpWithGmail,
+        loading,
+        token,
         createUser,
         login,
-        logout
-    }
+        logout,
+        authAxios
+    };
 
+    return (
+        <AuthContext.Provider value={authInfo}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
 
-
-
-  return (
-    <AuthContext.Provider value={authInfo}>
-        {children}
-    </AuthContext.Provider>
-  )
-}
-
-export default AuthProvider
+export default AuthProvider;

@@ -1,87 +1,54 @@
-import React, { useContext, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import React, { useContext, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contects/AuthProvider';
-import axios from 'axios';
-
 import { useSnackbar } from 'notistack';
-import img from "../assets/banner/35.png"
 
 function Signup() {
-
-  const [email , setEmail] = useState("")
-  const [password , setPassword] = useState("")
-  const navigates = useNavigate()
-    
-  const { enqueueSnackbar } = useSnackbar();
-  const {createUser,signUpWithGmail} = useContext(AuthContext);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { enqueueSnackbar } = useSnackbar();
+  const { createUser } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const from = location.state?.from?.pathname ||"/";
+  const from = location.state?.from?.pathname || "/";
 
-
-   const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    const form = e.target;
-    const email = form.email.value;
-    const password = form.password.value;
-    // console.log(email, password);
 
-    createUser(email,password).then((userCredential) => {
-      // Signed up 
-      const user = userCredential.user;
-      enqueueSnackbar("Sign Up Successfully...",{variant: 'success'});
-      navigate(from, {replace: true});
-      // ...
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      setError(errorMessage);
-      // ..
-    });
-   }
-
-   // sign up using goole account
-   const handleRegister = () =>  {
-     signUpWithGmail().then((result)=> {
-      const user = result.user;
-      enqueueSnackbar("Sign Up Successfully...",{variant: 'success'});
-      navigate(from, {replace: true});
-    })    
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      setError(errorMessage);
-      // ..
-    });
-   }
-
-
-  //  ani 
-
-  const handleRegisters = (e) => {
-    e.preventDefault();
-    if ( !email || !password) {
-        alert("Please fill all the input fields.");
-        return;
+    // Form validation
+    if (!name || !email || !password) {
+      setError("Please fill all the input fields.");
+      return;
     }
-    if (!email.includes("@gmail.com")) {
-        alert("Please enter a valid Gmail address.");
-        return;
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
     }
-    axios.post('http://localhost:3000/register', {
-        "email": email,
-        "password": password
-    }).then(() => {
-        alert("Registered.");
-        navigate("/login");
-    }).catch((error) => console.log(error));
-}
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await createUser(name, email, password);
+
+      enqueueSnackbar("Registration successful!", { variant: 'success' });
+      navigate('/login');
+    } catch (error) {
+      console.error("Registration error:", error);
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
+      enqueueSnackbar("Registration failed. Please try again.", { variant: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-  
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
         <div
@@ -93,31 +60,61 @@ function Signup() {
               <h1 className="text-2xl font-semibold">Sign up Form</h1>
             </div>
             <div className="divide-y divide-gray-200">
-              <form className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+              <form onSubmit={handleSignUp} className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
                 <div className="relative">
-                  <input  value={email} onChange={(e)=> setEmail(e.target.value)} 
-                    id="email" name="email" type="text" className="peer  h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:borer-rose-600" placeholder="Email address" />
-                
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600"
+                    placeholder="Full Name"
+                  />
                 </div>
                 <div className="relative">
-                  <input   value={password} onChange={(e)=> setPassword(e.target.value)} 
-                   id="password" name="password" type="password" className="peer  h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:borer-rose-600" placeholder="Password" />
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600"
+                    placeholder="Email address"
+                  />
                 </div>
-                <p>If you have an account.Please <Link to={'/login'} className='text-blue-700 underline'>Login</Link>Here</p>
                 <div className="relative">
-                  <button onClick={handleRegisters}  className="bg-blue-500 text-white rounded-md px-6 py-2">Sign up</button>
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600"
+                    placeholder="Password"
+                  />
+                </div>
+                {error && <p className='text-red-700'>{error}</p>}
+                <p>Already have an account? <Link to={'/login'} className='text-blue-700 underline'>Login</Link> here</p>
+                <div className="relative">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-blue-500 text-white rounded-md px-6 py-2 hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+                  >
+                    {isLoading ? 'Signing up...' : 'Sign up'}
+                  </button>
                 </div>
               </form>
-            </div>
-            <hr />
-            <div  className='flex w-full items-center flex-col mt-5 gap-3'>
-              <button onClick={handleRegister} className='block'> <img src={img} className='w-12 h-12 inline-block' alt="" />login with Google</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Signup
+export default Signup;
