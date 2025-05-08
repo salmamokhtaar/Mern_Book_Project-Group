@@ -120,7 +120,6 @@ function ManageBooks() {
             <Table.HeadCell className="py-3">Book Title</Table.HeadCell>
             <Table.HeadCell className="py-3">Author</Table.HeadCell>
             <Table.HeadCell className="py-3">Category</Table.HeadCell>
-            <Table.HeadCell className="py-3">Price</Table.HeadCell>
             <Table.HeadCell className="py-3">Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body className="divide-y">
